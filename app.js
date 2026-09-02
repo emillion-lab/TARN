@@ -943,54 +943,79 @@ function updateAirportBadge(){
   else                              {b.textContent='✈ OFFLINE';  b.style.color='#ef4444';}
 }
 
-function loadFlights(){
+function processFlightData(data){
+  const fl=data.data||[]; if(!fl.length){ loadFlightsFromCache(); return; }
+  flightHours=Array(24).fill(0); flightDetails=[];
+  fl.forEach(f=>{
+    if(!f.arrival?.scheduled) return;
+    const t=new Date(f.arrival.estimated||f.arrival.scheduled);
+    const dep=(f.departure?.airport||f.departure?.country_name||'').toLowerCase();
+    const nonSchengen=dep.match(/tur|istanbul|sabiha|ankar|israel|ben.gurion|dubai|abu.dhabi|egypt|cairo|morocco|casablanca|london|heathrow|gatwick|stansted|luton|manchester|birmingham|usa|jfk|lax|china|beijing|shanghai|russia|moscow|georgia|tbilisi|armenia|yerevan|jordan|amman|serbia|belgrade|ukraine|kyiv|north.mac/);
+    // Exit window: first passenger at +15/25 min, last at +25/35 min
+    const exitFirst = nonSchengen ? 25 : 15;
+    const exitLast  = nonSchengen ? 35 : 25;
+    const tFirst = new Date(t.getTime() + exitFirst*60000);
+    const tLast  = new Date(t.getTime() + exitLast*60000);
+    const hFirst = (tFirst.getUTCHours()+2)%24;
+    const hLast  = (tLast.getUTCHours()+2)%24;
+    const mFirst = tFirst.getUTCMinutes();
+    const mLast  = tLast.getUTCMinutes();
+    // Spread passengers across exit window (3 slots: start, mid, end)
+    const hMid = (new Date(t.getTime()+(exitFirst+exitLast)/2*60000).getUTCHours()+2)%24;
+    flightHours[hFirst] = (flightHours[hFirst]||0) + 0.3;
+    flightHours[hMid]   = (flightHours[hMid]||0)   + 0.5;
+    flightHours[hLast]  = (flightHours[hLast]||0)  + 0.2;
+    // Store for popup
+    const fn = (f.flight?.iata||'??');
+    const depAirport = f.departure?.airport||dep;
+    flightDetails.push({
+      fn, depAirport, nonSchengen:!!nonSchengen,
+      landH:(t.getUTCHours()+2)%24, landM:t.getUTCMinutes(),
+      exitFromH:hFirst, exitFromM:mFirst,
+      exitToH:hLast,   exitToM:mLast
+    });
+  });
+  console.log('[TARN] flightDetails populated:', flightDetails.length, 'flights, source:', window.__flightSource||'?');
+  // ZUR-FLIGHTS-OUT — таблото чете оттук
+  window.flightDetails = flightDetails;
+  if(window.ZURTransportRedraw) window.ZURTransportRedraw();
+  airportStatus=(data.demo?'demo':'live');
+  injectAirportEvents(); updateAirportBadge();
+  buildCurve(); buildTicker(); render(currentHour);
+}
+
+function loadFlightsFromCache(){
   fetch('flight-cache.json?v='+Date.now())
     .then(r=>{if(!r.ok)throw 0;return r.json();})
-    .then(data=>{
-      const fl=data.data||[]; if(!fl.length) throw 0;
-      flightHours=Array(24).fill(0); flightDetails=[];
-      fl.forEach(f=>{
-        if(!f.arrival?.scheduled) return;
-        const t=new Date(f.arrival.estimated||f.arrival.scheduled);
-        const dep=(f.departure?.airport||f.departure?.country_name||'').toLowerCase();
-        const nonSchengen=dep.match(/tur|istanbul|sabiha|ankar|israel|ben.gurion|dubai|abu.dhabi|egypt|cairo|morocco|casablanca|london|heathrow|gatwick|stansted|luton|manchester|birmingham|usa|jfk|lax|china|beijing|shanghai|russia|moscow|georgia|tbilisi|armenia|yerevan|jordan|amman|serbia|belgrade|ukraine|kyiv|north.mac/);
-        // Exit window: first passenger at +15/25 min, last at +25/35 min
-        const exitFirst = nonSchengen ? 25 : 15;
-        const exitLast  = nonSchengen ? 35 : 25;
-        const tFirst = new Date(t.getTime() + exitFirst*60000);
-        const tLast  = new Date(t.getTime() + exitLast*60000);
-        const hFirst = (tFirst.getUTCHours()+2)%24;
-        const hLast  = (tLast.getUTCHours()+2)%24;
-        const mFirst = tFirst.getUTCMinutes();
-        const mLast  = tLast.getUTCMinutes();
-        // Spread passengers across exit window (3 slots: start, mid, end)
-        const hMid = (new Date(t.getTime()+(exitFirst+exitLast)/2*60000).getUTCHours()+2)%24;
-        flightHours[hFirst] = (flightHours[hFirst]||0) + 0.3;
-        flightHours[hMid]   = (flightHours[hMid]||0)   + 0.5;
-        flightHours[hLast]  = (flightHours[hLast]||0)  + 0.2;
-        // Store for popup
-        const fn = (f.flight?.iata||'??');
-        const depAirport = f.departure?.airport||dep;
-        flightDetails.push({
-          fn, depAirport, nonSchengen:!!nonSchengen,
-          landH:(t.getUTCHours()+2)%24, landM:t.getUTCMinutes(),
-          exitFromH:hFirst, exitFromM:mFirst,
-          exitToH:hLast,   exitToM:mLast
-        });
-      });
-      console.log('[SOF] flightDetails populated:', flightDetails.length, 'flights');
-      // ZUR-FLIGHTS-OUT — таблото чете оттук
-      window.flightDetails = flightDetails;
-      if(window.ZURTransportRedraw) window.ZURTransportRedraw();
-      airportStatus=(data.demo?'demo':'live');
-      injectAirportEvents(); updateAirportBadge();
-      buildCurve(); buildTicker(); render(currentHour);
-    })
+    .then(processFlightData)
     .catch(e=>{
       window.__flErr = (e && (e.stack||e.message)) ? String(e.stack||e.message).slice(0,160) : ('code '+String(e));
-      console.error('[SOF] flights failed:', e);
+      console.error('[TARN] flights failed:', e);
       applyFallbackAirport(); updateAirportBadge();
       buildCurve(); buildTicker(); render(currentHour);
+    });
+}
+
+function loadFlights(){
+  // Живо от mvr-proxy (същият AeroDataBox пул, който храни BAK/SOF) — кешираният
+  // flight-cache.json е само резерва при мрежов проблем или изчерпана дневна квота.
+  const LIVE = 'https://mvr-proxy.mihov-emil.workers.dev/flights/GVA';
+  fetch(LIVE, { cache:'no-store' })
+    .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+    .then(live=>{
+      if(!live || !live.arrivals || !live.arrivals.length) throw 0;
+      // привеждаме към формата, който processFlightData вече разбира
+      const data = { data: live.arrivals.map(a=>({
+        flight:    { iata: String(a.number||'').replace(/\s+/g,'') },
+        departure: { airport: a.from || '' },
+        arrival:   { scheduled: (a.scheduled||'').replace(' ','T'), estimated: (a.revised||a.scheduled||'').replace(' ','T') }
+      })) };
+      window.__flightSource = 'live · ' + data.data.length + (live.budgetHold?' (бюджет)':'');
+      processFlightData(data);
+    })
+    .catch(()=>{
+      window.__flightSource = 'демо (mvr-proxy недостъпен или дневна квота)';
+      loadFlightsFromCache();
     });
 }
 

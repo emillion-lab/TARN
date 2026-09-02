@@ -31,14 +31,15 @@ let alertedEvents     = new Set();
 // ZONE DEFINITIONS
 // ═══════════════════════════════════════════════
 const ZONES = [
-  { id:"airport",    name:"Geneva Airport (GVA)",       icon:"✈️", lat:46.2381, lng:6.1089, radius:900, type:"airport", wazeName:"Geneva Airport" },
-  { id:"lys",        name:"Lyon–Saint Exupéry (LYS)",   icon:"✈️", lat:45.7256, lng:5.0811, radius:700, type:"transit", wazeName:"Lyon Saint Exupery Airport" },
-  { id:"cmf",        name:"Chambéry Airport (CMF)",     icon:"✈️", lat:45.6381, lng:5.8800, radius:600, type:"transit", wazeName:"Chambery Airport" },
-  { id:"moutiers",   name:"Gare de Moûtiers (ski train)",icon:"🚉", lat:45.4855, lng:6.5314, radius:400, type:"transit", wazeName:"Gare de Moutiers" },
+  { id:"airport",    name:"Geneva Airport (GVA)",       icon:"✈️", code:"GVA", lat:46.2381, lng:6.1089, radius:900, type:"airport", wazeName:"Geneva Airport" },
+  { id:"lys",        name:"Lyon–Saint Exupéry (LYS)",   icon:"✈️", code:"LYS", lat:45.7256, lng:5.0811, radius:700, type:"transit", wazeName:"Lyon Saint Exupery Airport" },
+  { id:"cmf",        name:"Chambéry Airport (CMF)",     icon:"✈️", code:"CMF", lat:45.6381, lng:5.8800, radius:600, type:"transit", wazeName:"Chambery Airport" },
+  { id:"moutiers",   name:"Gare de Moûtiers (train + navettes bus)",icon:"🚉", lat:45.4855, lng:6.5314, radius:400, type:"transit", wazeName:"Gare de Moutiers" },
   { id:"courchevel", name:"Courchevel",                 icon:"🏔", lat:45.4147, lng:6.6349, radius:500, type:"hotel",   wazeName:"Courchevel 1850" },
   { id:"meribel",    name:"Méribel",                    icon:"🏔", lat:45.3974, lng:6.5657, radius:500, type:"hotel",   wazeName:"Meribel" },
   { id:"valthorens", name:"Val Thorens",                icon:"🏔", lat:45.2977, lng:6.5797, radius:450, type:"hotel",   wazeName:"Val Thorens" },
   { id:"bozel",      name:"Bozel (base)",                icon:"🏠", lat:45.4436, lng:6.6392, radius:350, type:"office",  wazeName:"Bozel" },
+  { id:"hospital_moutiers", name:"Centre Hospitalier (CHAM Moûtiers)", icon:"🏥", lat:45.4880, lng:6.5280, radius:250, type:"hospital", wazeName:"Centre Hospitalier Moutiers, 43 rue Ecole des Mines, 73600 Moutiers" },
 ];
 
 // ═══════════════════════════════════════════════
@@ -47,7 +48,7 @@ const ZONES = [
 const BASE = {
   airport:3.0, lys:1.8, cmf:1.2, moutiers:2.2,
   courchevel:2.8, meribel:2.4, valthorens:2.0,
-  bozel:0.6,
+  bozel:0.6, hospital_moutiers:0.7,
 };
 
 // ═══════════════════════════════════════════════
@@ -315,9 +316,9 @@ function buildNext90(){
 }
 
 // ═══════════════════════════════════════════════
-const map = L.map('map', {center:[45.40,6.58], zoom:11, zoomControl:true, attributionControl:false});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  maxZoom:19, subdomains:['a','b','c','d']
+const map = L.map('map', {center:[45.40,6.58], zoom:11, zoomControl:true, attributionControl:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19, subdomains:['a','b','c'], attribution:'&copy; OpenStreetMap contributors'
 }).addTo(map);
 document.getElementById('map').style.filter='brightness(0.85) saturate(0.6)';
 setTimeout(()=>map.invalidateSize(), 300);
@@ -337,6 +338,12 @@ function makeHospitalIcon(score) {
     </div>`,
     iconSize:[sz,sz], iconAnchor:[sz/2,sz/2],
   });
+}
+
+function makeCodeBadge(text){
+  return L.divIcon({className:'',
+    html:`<div style="background:#0284c7;color:#fff;font:800 11px 'Courier New',monospace;padding:2px 6px;border-radius:5px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);letter-spacing:.5px;border:1px solid rgba(255,255,255,.5)">${text}</div>`,
+    iconSize:null, iconAnchor:[-8,10]});
 }
 
 function buildCircles() {
@@ -366,8 +373,12 @@ function buildCircles() {
     }
     const c=L.circle([z.lat,z.lng],{radius:z.radius,...getScoreStyle(BASE[z.id]||0.3,z.type)});
     c.on('click',()=>z.type==='airport'?showAirportSchedule():z.type==='transit'?showTransitPopup(z.id):showZonePopup(z.id)); c.addTo(map); circleMap[z.id]=c;
+    if (z.code) {
+      L.marker([z.lat,z.lng],{icon:makeCodeBadge(z.code),zIndexOffset:550,interactive:false}).addTo(map);
+    }
   });
 }
+
 
 function getScoreStyle(score, type) {
   const c=demandColor(score,type);
@@ -1044,8 +1055,13 @@ async function loadWeather(){
     const d=await r.json();
     if(d.cod!==200) throw 0;
     const w=d.weather[0], temp=Math.round(d.main.temp), wind=d.wind?.speed||0;
-    const icons={'Rain':'🌧','Drizzle':'🌦','Thunderstorm':'⛈','Snow':'❄️','Fog':'🌫','Mist':'🌫'};
-    const wIcon=icons[w.main]||'☀️';
+    const isNight = /n$/.test(w.icon||'');
+    const icons={
+      'Clear':  isNight?'🌙':'☀️',
+      'Clouds': isNight?'☁️':'⛅',
+      'Rain':'🌧','Drizzle':'🌦','Thunderstorm':'⛈','Snow':'❄️','Fog':'🌫','Mist':'🌫','Haze':'🌫',
+    };
+    const wIcon=icons[w.main]||(isNight?'🌙':'☀️');
     const boost=w.main==='Rain'?2.0:w.main==='Thunderstorm'?2.8:w.main==='Snow'?1.8:w.main==='Drizzle'?1.2:wind>10?0.5:0;
     weatherBoost=boost;
     bar.style.display='flex';

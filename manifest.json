@@ -1,0 +1,26 @@
+{
+  "name": "Tarentaise Transfer Radar",
+  "short_name": "TARN Transfer",
+  "description": "Real-time transfer demand for the Tarentaise valley — Geneva/Lyon/Chambéry arrivals, Moûtiers, Courchevel, Méribel, Val Thorens",
+  "start_url": "/TARN/",
+  "scope": "/TARN/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#0284c7",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "https://emillion-lab.github.io/FishBakshish/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://emillion-lab.github.io/FishBakshish/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

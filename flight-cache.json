@@ -1,0 +1,27 @@
+{
+ "demo": true,
+ "data": [
+  {"flight": {"iata": "EZS1421"}, "departure": {"airport": "Paris Charles de Gaulle"}, "arrival": {"scheduled": "2026-09-03T04:10:00+00:00"}},
+  {"flight": {"iata": "AF1602"}, "departure": {"airport": "Paris Orly"}, "arrival": {"scheduled": "2026-09-03T05:05:00+00:00"}},
+  {"flight": {"iata": "BA732"}, "departure": {"airport": "London Heathrow"}, "arrival": {"scheduled": "2026-09-03T06:20:00+00:00"}},
+  {"flight": {"iata": "U28871"}, "departure": {"airport": "London Gatwick"}, "arrival": {"scheduled": "2026-09-03T07:15:00+00:00"}},
+  {"flight": {"iata": "LX2054"}, "departure": {"airport": "Amsterdam"}, "arrival": {"scheduled": "2026-09-03T07:50:00+00:00"}},
+  {"flight": {"iata": "SN2612"}, "departure": {"airport": "Brussels"}, "arrival": {"scheduled": "2026-09-03T08:30:00+00:00"}},
+  {"flight": {"iata": "EK89"}, "departure": {"airport": "Dubai"}, "arrival": {"scheduled": "2026-09-03T09:10:00+00:00"}},
+  {"flight": {"iata": "KL1229"}, "departure": {"airport": "Amsterdam"}, "arrival": {"scheduled": "2026-09-03T09:45:00+00:00"}},
+  {"flight": {"iata": "AF1608"}, "departure": {"airport": "Paris Charles de Gaulle"}, "arrival": {"scheduled": "2026-09-03T10:20:00+00:00"}},
+  {"flight": {"iata": "EZS3421"}, "departure": {"airport": "Manchester"}, "arrival": {"scheduled": "2026-09-03T10:55:00+00:00"}},
+  {"flight": {"iata": "BA734"}, "departure": {"airport": "London Heathrow"}, "arrival": {"scheduled": "2026-09-03T11:30:00+00:00"}},
+  {"flight": {"iata": "LG2201"}, "departure": {"airport": "Luxembourg"}, "arrival": {"scheduled": "2026-09-03T12:15:00+00:00"}},
+  {"flight": {"iata": "AF1610"}, "departure": {"airport": "Paris Orly"}, "arrival": {"scheduled": "2026-09-03T13:40:00+00:00"}},
+  {"flight": {"iata": "U28873"}, "departure": {"airport": "London Luton"}, "arrival": {"scheduled": "2026-09-03T14:20:00+00:00"}},
+  {"flight": {"iata": "LX2058"}, "departure": {"airport": "Frankfurt"}, "arrival": {"scheduled": "2026-09-03T15:10:00+00:00"}},
+  {"flight": {"iata": "EZS1425"}, "departure": {"airport": "Paris Charles de Gaulle"}, "arrival": {"scheduled": "2026-09-03T16:45:00+00:00"}},
+  {"flight": {"iata": "BA736"}, "departure": {"airport": "London Gatwick"}, "arrival": {"scheduled": "2026-09-03T17:30:00+00:00"}},
+  {"flight": {"iata": "SN2616"}, "departure": {"airport": "Brussels"}, "arrival": {"scheduled": "2026-09-03T18:20:00+00:00"}},
+  {"flight": {"iata": "AF1614"}, "departure": {"airport": "Paris Charles de Gaulle"}, "arrival": {"scheduled": "2026-09-03T19:15:00+00:00"}},
+  {"flight": {"iata": "EZS3425"}, "departure": {"airport": "Birmingham"}, "arrival": {"scheduled": "2026-09-03T20:05:00+00:00"}},
+  {"flight": {"iata": "LX2062"}, "departure": {"airport": "Amsterdam"}, "arrival": {"scheduled": "2026-09-03T20:50:00+00:00"}},
+  {"flight": {"iata": "AF1618"}, "departure": {"airport": "Paris Orly"}, "arrival": {"scheduled": "2026-09-03T21:40:00+00:00"}}
+ ]
+}
